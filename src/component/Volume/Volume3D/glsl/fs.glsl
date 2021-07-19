@@ -60,16 +60,16 @@ vec4 getTextureValue(vec3 coord)
 //   return ivec4(-1, -1, -1, -1);
 // }
 
-vec4 getIsoSurface(vec3 coord)
-{
-  vec4 color = texture(u_volume, coord);
-  if(color.r >= u_isoMinValue && color.r <= u_isoMaxValue)
-  {
-    return vec4(color);
-  }
+// vec4 getIsoSurface(vec3 coord)
+// {
+//   vec4 color = texture(u_volume, coord);
+//   if(color.r >= u_isoMinValue && color.r <= u_isoMaxValue)
+//   {
+//     return vec4(color);
+//   }
 
-  return vec4(-1, -1, -1, -1);
-}
+//   return vec4(-1, -1, -1, -1);
+// }
 
 bool getCollisionPosition(vec3 planePos, vec3 planeNor, out vec3 pos)
 {
@@ -289,7 +289,7 @@ void main() {
 
   vec3 rayDir = EndPos - StartPos;
   float rayLength = length(rayDir);
-  float countf = rayLength * 124.0 * 1.0;
+  float countf = rayLength * 248.0 * 1.0;
   vec3 steps = rayDir / countf;
   highp int count = int(countf);
   vec4 sum = vec4(0.);
@@ -305,13 +305,18 @@ void main() {
 
   for(int i = 0; i < count; i++)
   {
-    float value = getTextureValue(StartPos).r;
-    vec4 color = texture(u_color, vec2(value, 0.5));
+    // float value = getTextureValue(StartPos).r;
+    // vec4 color = texture(u_color, vec2(value, 0.5));
 
-    // vec2 vecRG = getTextureValue(StartPos).bb;
-    // float value = vecRG[0] * 255.0 * 256.0 + vecRG[1] * 255.0 - 1140.0;
-    // vec4 color = texture(u_color, vec2(value / 65535.0, 0.5));
+    vec2 vecRG = getTextureValue(StartPos).rg;
+    float value = (vecRG[1] * 255.0 * 256.0 + vecRG[0] * 255.0);
+    vec4 color = texture(u_color, vec2(value / 8140.0, 0.5));
 
+    // if(vecRG[1] > 0.2 && vecRG[1] < 1.0) {
+    //   outColor = vec4(1.0, 0.0, 0.0, 1.0);
+    //   return;
+    // }
+    
     // ivec4 iValue = getTextureValue(StartPos);
     // float value = float(iValue[0] + 1140) / 8140.0;
     // vec4 color = texture(u_color, vec2(value, 0.5));

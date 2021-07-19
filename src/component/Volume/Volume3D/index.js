@@ -326,24 +326,24 @@ function Volume3D() {
     xmlVtiReader('/assets/volumes/dicom1.vti').then((imageData) => {
       volume = imageData;
 
-      volume.floatArray = new Float32Array(imageData.data.length);
-      const range = volume.max - volume.min;
-      for (let i = 0; i < volume.data.length; i++) {
-        volume.floatArray[i] = (volume.data[i] - volume.min) / range;
-      }
-
-      // const size = imageData.data.length * 2;
-      // volume.floatArray = new Uint8Array(size);
-      // let lowBit;
-      // let upperBit;
-      // let value;
-      // for (let i = 0; i < size; i += 2) {
-      //   value = volume.data[i] - volume.min;
-      //   lowBit = value & 0xff;
-      //   upperBit = (value >> 8) & 0xff;
-      //   volume.floatArray[i] = lowBit;
-      //   volume.floatArray[i + 1] = upperBit;
+      // volume.floatArray = new Float32Array(imageData.data.length);
+      // const range = volume.max - volume.min;
+      // for (let i = 0; i < volume.data.length; i++) {
+      //   volume.floatArray[i] = (volume.data[i] - volume.min) / range;
       // }
+
+      const size = imageData.data.length * 2;
+      volume.floatArray = new Uint8Array(size);
+      let lowBit;
+      let upperBit;
+      let value;
+      for (let i = 0; i < size / 2; i++) {
+        value = volume.data[i] - volume.min;
+        lowBit = value & 0xff;
+        upperBit = (value >> 8) & 0xff;
+        volume.floatArray[i * 2] = lowBit;
+        volume.floatArray[i * 2 + 1] = upperBit;
+      }
 
       // volume.floatArray = new Int16Array(imageData.data.length);
       // for (let i = 0; i < volume.data.length; i++) {
@@ -378,6 +378,7 @@ function Volume3D() {
       gl.bindTexture(gl.TEXTURE_2D, null);
 
       vbo_volumeBuffer = gl.createTexture();
+      // gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
       gl.bindTexture(gl.TEXTURE_3D, vbo_volumeBuffer);
       gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
       gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
@@ -386,33 +387,31 @@ function Volume3D() {
       // gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
       gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
       gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-      gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
-      gl.texImage3D(
-        gl.TEXTURE_3D,
-        0,
-        gl.R16F,
-        imageData.dimension[0],
-        imageData.dimension[1],
-        imageData.dimension[2],
-        0,
-        gl.RED,
-        gl.FLOAT,
-        imageData.floatArray
-      );
-
       // gl.texImage3D(
       //   gl.TEXTURE_3D,
       //   0,
-      //   gl.RG8UI,
+      //   gl.R16F,
       //   imageData.dimension[0],
       //   imageData.dimension[1],
       //   imageData.dimension[2],
       //   0,
-      //   gl.RG,
-      //   gl.UNSIGNED_BYTE,
-      //   // gl.UNSIGNED_SHORT,
+      //   gl.RED,
+      //   gl.FLOAT,
       //   imageData.floatArray
       // );
+
+      gl.texImage3D(
+        gl.TEXTURE_3D,
+        0,
+        gl.RG8,
+        imageData.dimension[0],
+        imageData.dimension[1],
+        imageData.dimension[2],
+        0,
+        gl.RG,
+        gl.UNSIGNED_BYTE,
+        imageData.floatArray
+      );
 
       // gl.texImage3D(
       //   gl.TEXTURE_3D,
