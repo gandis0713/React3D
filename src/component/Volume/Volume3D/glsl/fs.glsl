@@ -1,11 +1,12 @@
 #version 300 es
 
-precision mediump float;
+precision highp float;
+precision highp int;
 
 in vec3 fs_vertexVC;
 
 out vec4 outColor;
-
+// uniform highp isampler3D u_volume;
 uniform highp sampler3D u_volume;
 uniform highp sampler2D u_color;
 uniform highp sampler2D u_jitter;
@@ -42,10 +43,22 @@ uniform vec3 u_Center;
 uniform highp mat4 u_MCVC;
 uniform highp mat4 u_VCMC;
 
+// ivec4 getTextureValue(vec3 coord)
 vec4 getTextureValue(vec3 coord)
 {
   return texture(u_volume, coord);
 }
+
+// ivec4 getIsoSurface(vec3 coord)
+// {
+//   ivec4 color = texture(u_volume, coord);
+//   if(color.r >= u_isoMinValue && color.r <= u_isoMaxValue)
+//   {
+//     return ivec4(color);
+//   }
+
+//   return ivec4(-1, -1, -1, -1);
+// }
 
 vec4 getIsoSurface(vec3 coord)
 {
@@ -225,43 +238,43 @@ bool getRayPosition(out vec3 StartPos, out vec3 EndPos)
 
 }
 
-void applyLight(float value, vec3 StartPos, vec3 steps, out vec4 color)
-{
-    vec4 result;
-    result.x = getTextureValue(StartPos + vec3(steps.x, 0.0, 0.0)).r - value;
-    result.y = getTextureValue(StartPos + vec3(0.0, steps.y, 0.0)).r - value;
-    result.z = getTextureValue(StartPos + vec3(0.0, 0.0, steps.z)).r - value;
+// void applyLight(float value, vec3 StartPos, vec3 steps, out vec4 color)
+// {
+//     vec4 result;
+//     result.x = getTextureValue(StartPos + vec3(steps.x, 0.0, 0.0)).r - value;
+//     result.y = getTextureValue(StartPos + vec3(0.0, steps.y, 0.0)).r - value;
+//     result.z = getTextureValue(StartPos + vec3(0.0, 0.0, steps.z)).r - value;
 
-    result.xyz /= 0.01;
+//     result.xyz /= 0.01;
 
-    result.w = length(result.xyz);
+//     result.w = length(result.xyz);
 
-    result.xyz =
-      result.x * u_planeNormal1 +
-      result.y * u_planeNormal3 +
-      result.z * u_planeNormal5;
+//     result.xyz =
+//       result.x * u_planeNormal1 +
+//       result.y * u_planeNormal3 +
+//       result.z * u_planeNormal5;
 
-    if (result.w > 0.0)
-    {
-      result.xyz /= result.w;
-    }
+//     if (result.w > 0.0)
+//     {
+//       result.xyz /= result.w;
+//     }
 
-    float vDiffuse = 0.7;
-    float vAmbient = 0.2;
-    float vSpecular = 0.1;
-    float vSpecularPower = 0.1;
-    vec3 lightColor = vec3(1,1,1);
-    vec3 lightDir = vec3(1, 1, 1);
-    vec3 diffuse = vec3(0.0, 0.0, 0.0);
-    vec3 specular = vec3(0.0, 0.0, 0.0);
-    float df = abs(dot(result.rgb, -lightDir));
-    diffuse += (df * lightColor);
-    vec3 halfAngle = vec3(0,0, 0.5); // TODO calculate
-    float sf = pow( abs(dot(halfAngle, result.rgb)), vSpecularPower);
-    specular += (sf * lightColor);
-    color.rgb = color.rgb*(diffuse*vDiffuse + vAmbient) + specular*vSpecular;
+//     float vDiffuse = 0.7;
+//     float vAmbient = 0.2;
+//     float vSpecular = 0.1;
+//     float vSpecularPower = 0.1;
+//     vec3 lightColor = vec3(1,1,1);
+//     vec3 lightDir = vec3(1, 1, 1);
+//     vec3 diffuse = vec3(0.0, 0.0, 0.0);
+//     vec3 specular = vec3(0.0, 0.0, 0.0);
+//     float df = abs(dot(result.rgb, -lightDir));
+//     diffuse += (df * lightColor);
+//     vec3 halfAngle = vec3(0,0, 0.5); // TODO calculate
+//     float sf = pow( abs(dot(halfAngle, result.rgb)), vSpecularPower);
+//     specular += (sf * lightColor);
+//     color.rgb = color.rgb*(diffuse*vDiffuse + vAmbient) + specular*vSpecular;
     
-}
+// }
 
 void main() {
 
@@ -294,6 +307,14 @@ void main() {
   {
     float value = getTextureValue(StartPos).r;
     vec4 color = texture(u_color, vec2(value, 0.5));
+
+    // vec2 vecRG = getTextureValue(StartPos).bb;
+    // float value = vecRG[0] * 255.0 * 256.0 + vecRG[1] * 255.0 - 1140.0;
+    // vec4 color = texture(u_color, vec2(value / 65535.0, 0.5));
+
+    // ivec4 iValue = getTextureValue(StartPos);
+    // float value = float(iValue[0] + 1140) / 8140.0;
+    // vec4 color = texture(u_color, vec2(value, 0.5));
 
     // applyLight(value, StartPos, steps, color);
 

@@ -1,15 +1,14 @@
-import React, {useState, useEffect } from 'react'
-import xmlVtiReader from '../../../common/DicomReader'
-import { createShader, createRenderShaderProgram } from '../../../webgl/shader/Shader'
-import vertexShaderSource from './glsl/vs.glsl'
-import fragmentShaderSource from './glsl/fs.glsl'
-import {vec3, mat4} from 'gl-matrix'
-import {vertices} from './resource'
-
+import React, { useState, useEffect } from 'react';
+import xmlVtiReader from '../../../common/DicomReader';
+import { createShader, createRenderShaderProgram } from '../../../webgl/shader/Shader';
+import vertexShaderSource from './glsl/vs.glsl';
+import fragmentShaderSource from './glsl/fs.glsl';
+import { vec3, mat4 } from 'gl-matrix';
+import { vertices } from './resource';
 
 import Grid from '@material-ui/core/Grid';
 import Typography from '@material-ui/core/Typography';
-import TransferFunction from './TransferFunction'
+import TransferFunction from './TransferFunction';
 
 const camEye = vec3.create();
 camEye[0] = 0;
@@ -100,47 +99,44 @@ let colorData;
 let opacityData;
 
 function Volume3D() {
-  console.log("Volume3D."); 
-  
+  console.log('Volume3D.');
+
   const onMounted = function() {
-    
-    console.log("on Mounted.");
+    console.log('on Mounted.');
 
     const transfer = new TransferFunction();
     transfer.create();
 
     let colorValue = transfer.getColorValue();
     let opacityValue = transfer.getOpacityValue();
-    
+
     const dataSize = opacityValue.length;
     colorData = new Float32Array(dataSize * 4);
-    for(let i = 0; i < dataSize; i++) {
+    for (let i = 0; i < dataSize; i++) {
       colorData[i * 4 + 0] = colorValue[0][i] < 0 ? 0 : colorValue[0][i];
       colorData[i * 4 + 1] = colorValue[1][i] < 0 ? 0 : colorValue[1][i];
       colorData[i * 4 + 2] = colorValue[2][i] < 0 ? 0 : colorValue[2][i];
       colorData[i * 4 + 3] = opacityValue[i] < 0 ? 0 : opacityValue[i];
-      
+
       colorData[i * 4 + 0] = colorValue[0][i] > 1 ? 1 : colorData[i * 4 + 0];
       colorData[i * 4 + 1] = colorValue[1][i] > 1 ? 1 : colorData[i * 4 + 1];
       colorData[i * 4 + 2] = colorValue[2][i] > 1 ? 1 : colorData[i * 4 + 2];
       colorData[i * 4 + 3] = opacityValue[i] > 1 ? 1 : colorData[i * 4 + 3];
     }
 
-    console.log("colorData : ", colorData);
-    
+    console.log('colorData : ', colorData);
 
-    if(gl) {
-      console.log("View was already initialized.");
+    if (gl) {
+      console.log('View was already initialized.');
       initView();
       return;
     }
 
     initView();
-  }
-  
+  };
+
   const mouseMoveEvent = (event) => {
-    if(isDragging === true) {
-      
+    if (isDragging === true) {
       const diffX = event.offsetX - halfWidth - prePosition[0];
       const diffY = halfHeight - event.offsetY - prePosition[1];
 
@@ -150,13 +146,13 @@ function Volume3D() {
       vec3.cross(axis, dir, screenNormal);
 
       vec3.normalize(axis, axis);
-      
+
       let dgreeX = vec3.dot(axis, [1, 0, 0]);
       let dgreeY = vec3.dot(axis, [0, 1, 0]);
 
       const degreeAmount = 3.5;
-      dgreeX = dgreeX * Math.PI / 180.0;
-      dgreeY = dgreeY * Math.PI / 180.0;
+      dgreeX = (dgreeX * Math.PI) / 180.0;
+      dgreeY = (dgreeY * Math.PI) / 180.0;
       dgreeX *= degreeAmount;
       dgreeY *= degreeAmount;
 
@@ -179,10 +175,10 @@ function Volume3D() {
       vec3.normalize(camTarToEye, camTarToEye);
       vec3.cross(camUp, camTarToEye, camRight);
       vec3.normalize(camUp, camUp);
-      
+
       vec3.cross(camRight, camUp, camTarToEye);
       vec3.normalize(camRight, camRight);
-      
+
       mat4.lookAt(WCVC, camEye, camTar, camUp);
 
       mat4.multiply(MCVC, WCVC, MCWC);
@@ -193,36 +189,36 @@ function Volume3D() {
       prePosition[1] = halfHeight - event.offsetY;
 
       setCurrentValues();
-      
+
       render();
     }
-  }
+  };
 
   const setCurrentValues = function() {
     const pos = vec3.create();
     volume.current.box = [0.5, -0.5, 0.5, -0.5, 0.5, -0.5];
     const bounds = [-0.5001, 0.5001, -0.5001, 0.5001, -0.5001, 0.5001]; // TODO : check
-    for(let i = 0; i < 8; i++) {
+    for (let i = 0; i < 8; i++) {
       vec3.set(
         pos,
         bounds[i % 2],
         bounds[2 + (Math.floor(i / 2) % 2)],
         bounds[4 + Math.floor(i / 4)]
-        );
+      );
       vec3.transformMat4(pos, pos, MCVC);
-    
-      for(let j = 0; j < 3; j++) {
-        volume.current.box[j * 2] = Math.min(pos[j], volume.current.box[j * 2]); 
-        volume.current.box[j * 2 + 1] = Math.max(pos[j], volume.current.box[j * 2 + 1]); 
+
+      for (let j = 0; j < 3; j++) {
+        volume.current.box[j * 2] = Math.min(pos[j], volume.current.box[j * 2]);
+        volume.current.box[j * 2 + 1] = Math.max(pos[j], volume.current.box[j * 2 + 1]);
       }
     }
 
     volume.current.planeNormal0 = [-1, 0, 0];
-    volume.current.planeNormal1 = [ 1, 0, 0];
-    volume.current.planeNormal2 = [ 0,-1, 0];
-    volume.current.planeNormal3 = [ 0, 1, 0];
-    volume.current.planeNormal4 = [ 0, 0,-1];
-    volume.current.planeNormal5 = [ 0, 0, 1];
+    volume.current.planeNormal1 = [1, 0, 0];
+    volume.current.planeNormal2 = [0, -1, 0];
+    volume.current.planeNormal3 = [0, 1, 0];
+    volume.current.planeNormal4 = [0, 0, -1];
+    volume.current.planeNormal5 = [0, 0, 1];
 
     vec3.transformMat4(volume.current.planeNormal0, volume.current.planeNormal0, MCVC);
     vec3.transformMat4(volume.current.planeNormal1, volume.current.planeNormal1, MCVC);
@@ -230,51 +226,50 @@ function Volume3D() {
     vec3.transformMat4(volume.current.planeNormal3, volume.current.planeNormal3, MCVC);
     vec3.transformMat4(volume.current.planeNormal4, volume.current.planeNormal4, MCVC);
     vec3.transformMat4(volume.current.planeNormal5, volume.current.planeNormal5, MCVC);
-    
+
     vec3.normalize(volume.current.planeNormal0, volume.current.planeNormal0);
     vec3.normalize(volume.current.planeNormal1, volume.current.planeNormal1);
     vec3.normalize(volume.current.planeNormal2, volume.current.planeNormal2);
     vec3.normalize(volume.current.planeNormal3, volume.current.planeNormal3);
     vec3.normalize(volume.current.planeNormal4, volume.current.planeNormal4);
     vec3.normalize(volume.current.planeNormal5, volume.current.planeNormal5);
-    
-    console.log("volume : ", volume);
-  }
+
+    console.log('volume : ', volume);
+  };
 
   const mouseDownEvent = (event) => {
     isDragging = true;
 
     prePosition[0] = event.offsetX - halfWidth;
     prePosition[1] = halfHeight - event.offsetY;
-    
+
     render();
-  }
+  };
 
   const mouseUpEvent = (event) => {
     isDragging = false;
-  }
+  };
 
   const initView = function() {
-    
-    const glCanvas = document.getElementById("glcanvas");
-    glCanvas.addEventListener("mousedown", mouseDownEvent , false);
-    glCanvas.addEventListener("mousemove", mouseMoveEvent , false);
-    glCanvas.addEventListener("mouseup", mouseUpEvent , false);
-    gl = glCanvas.getContext("webgl2");
-    if(!gl) {
-      console.log("Failed to get gl context for webgl2.");
+    const glCanvas = document.getElementById('glcanvas');
+    glCanvas.addEventListener('mousedown', mouseDownEvent, false);
+    glCanvas.addEventListener('mousemove', mouseMoveEvent, false);
+    glCanvas.addEventListener('mouseup', mouseUpEvent, false);
+    gl = glCanvas.getContext('webgl2');
+    if (!gl) {
+      console.log('Failed to get gl context for webgl2.');
       return;
     }
-    
+
     width = gl.canvas.width;
     height = gl.canvas.height;
     halfWidth = width / 2;
     halfHeight = height / 2;
-    
+
     // init camera
     mat4.fromTranslation(MCWC, [-0.5, -0.5, -0.5]);
-    mat4.fromXRotation(MCWC, 91 * Math.PI / 180);
-    
+    mat4.fromXRotation(MCWC, (91 * Math.PI) / 180);
+
     mat4.lookAt(WCVC, camEye, camTar, camUp);
     mat4.invert(VCWC, WCVC);
     mat4.multiply(MCVC, WCVC, MCWC);
@@ -282,7 +277,7 @@ function Volume3D() {
     mat4.ortho(VCPC, -halfWidth, halfWidth, -halfHeight, halfHeight, -1000, 1000);
     mat4.invert(PCVC, VCPC);
     mat4.multiply(MCPC, VCPC, MCVC);
-    
+
     // create shader
     const vertexShader = createShader(gl, gl.VERTEX_SHADER, vertexShaderSource);
     const fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource);
@@ -293,7 +288,7 @@ function Volume3D() {
     u_jitter = gl.getUniformLocation(renderShaderProgram, 'u_jitter');
     u_MCPC = gl.getUniformLocation(renderShaderProgram, 'u_MCPC');
     u_MCVC = gl.getUniformLocation(renderShaderProgram, 'u_MCVC');
-    u_VCMC = gl.getUniformLocation(renderShaderProgram, 'u_VCMC');    
+    u_VCMC = gl.getUniformLocation(renderShaderProgram, 'u_VCMC');
     u_PCVC = gl.getUniformLocation(renderShaderProgram, 'u_PCVC');
     u_Dim = gl.getUniformLocation(renderShaderProgram, 'u_Dim');
     u_Extent = gl.getUniformLocation(renderShaderProgram, 'u_Extent');
@@ -323,20 +318,38 @@ function Volume3D() {
     u_planeDist3 = gl.getUniformLocation(renderShaderProgram, 'u_planeDist3');
     u_planeDist4 = gl.getUniformLocation(renderShaderProgram, 'u_planeDist4');
     u_planeDist5 = gl.getUniformLocation(renderShaderProgram, 'u_planeDist5');
-    
+
     setBuffer();
-  }
+  };
 
   const setBuffer = function() {
     xmlVtiReader('/assets/volumes/dicom1.vti').then((imageData) => {
-
       volume = imageData;
-      
+
       volume.floatArray = new Float32Array(imageData.data.length);
       const range = volume.max - volume.min;
-      for(let i = 0; i < volume.data.length; i++) {
+      for (let i = 0; i < volume.data.length; i++) {
         volume.floatArray[i] = (volume.data[i] - volume.min) / range;
       }
+
+      // const size = imageData.data.length * 2;
+      // volume.floatArray = new Uint8Array(size);
+      // let lowBit;
+      // let upperBit;
+      // let value;
+      // for (let i = 0; i < size; i += 2) {
+      //   value = volume.data[i] - volume.min;
+      //   lowBit = value & 0xff;
+      //   upperBit = (value >> 8) & 0xff;
+      //   volume.floatArray[i] = lowBit;
+      //   volume.floatArray[i + 1] = upperBit;
+      // }
+
+      // volume.floatArray = new Int16Array(imageData.data.length);
+      // for (let i = 0; i < volume.data.length; i++) {
+      //   volume.floatArray[i] = volume.data[i];
+      // }
+
       volume.current = {};
       volume.current.planeDist0 = volume.bounds[1] - volume.center[0];
       volume.current.planeDist1 = volume.center[0] - volume.bounds[0];
@@ -344,15 +357,15 @@ function Volume3D() {
       volume.current.planeDist3 = volume.center[1] - volume.bounds[2];
       volume.current.planeDist4 = volume.bounds[5] - volume.center[2];
       volume.current.planeDist5 = volume.center[2] - volume.bounds[4];
-      
 
-      vbo_colorBuffer = gl.createTexture();      
+      vbo_colorBuffer = gl.createTexture();
       gl.bindTexture(gl.TEXTURE_2D, vbo_colorBuffer);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-      gl.texImage2D(gl.TEXTURE_2D,
+      gl.texImage2D(
+        gl.TEXTURE_2D,
         0,
         gl.RGBA16F,
         colorData.length / 4,
@@ -360,17 +373,22 @@ function Volume3D() {
         0,
         gl.RGBA,
         gl.FLOAT,
-        colorData);
+        colorData
+      );
       gl.bindTexture(gl.TEXTURE_2D, null);
 
       vbo_volumeBuffer = gl.createTexture();
-      gl.bindTexture(gl.TEXTURE_3D, vbo_volumeBuffer); 
+      gl.bindTexture(gl.TEXTURE_3D, vbo_volumeBuffer);
       gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
       gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
       gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_WRAP_R, gl.CLAMP_TO_EDGE);
+      // gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+      // gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
       gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
       gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-      gl.texImage3D(gl.TEXTURE_3D,
+      gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
+      gl.texImage3D(
+        gl.TEXTURE_3D,
         0,
         gl.R16F,
         imageData.dimension[0],
@@ -379,7 +397,36 @@ function Volume3D() {
         0,
         gl.RED,
         gl.FLOAT,
-        imageData.floatArray);
+        imageData.floatArray
+      );
+
+      // gl.texImage3D(
+      //   gl.TEXTURE_3D,
+      //   0,
+      //   gl.RG8UI,
+      //   imageData.dimension[0],
+      //   imageData.dimension[1],
+      //   imageData.dimension[2],
+      //   0,
+      //   gl.RG,
+      //   gl.UNSIGNED_BYTE,
+      //   // gl.UNSIGNED_SHORT,
+      //   imageData.floatArray
+      // );
+
+      // gl.texImage3D(
+      //   gl.TEXTURE_3D,
+      //   0,
+      //   gl.R16I,
+      //   imageData.dimension[0],
+      //   imageData.dimension[1],
+      //   imageData.dimension[2],
+      //   0,
+      //   gl.RED_INTEGER,
+      //   gl.SHORT,
+      //   imageData.floatArray
+      // );
+
       gl.bindTexture(gl.TEXTURE_3D, null);
 
       const jitter = new Float32Array(32 * 32);
@@ -393,46 +440,33 @@ function Volume3D() {
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-      gl.texImage2D(gl.TEXTURE_2D,
-        0,
-        gl.R16F,
-        32,
-        32,
-        0,
-        gl.RED,
-        gl.FLOAT,
-        jitter);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.R16F, 32, 32, 0, gl.RED, gl.FLOAT, jitter);
 
-      vao = gl.createVertexArray(); 
+      vao = gl.createVertexArray();
       gl.bindVertexArray(vao);
-      
-      vbo_vertexBuffer = gl.createBuffer(); 
+
+      vbo_vertexBuffer = gl.createBuffer();
       gl.bindBuffer(gl.ARRAY_BUFFER, vbo_vertexBuffer);
       gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
-      
+
       const vertexID = gl.getAttribLocation(renderShaderProgram, 'vs_VertexPosition');
       gl.enableVertexAttribArray(vertexID);
-      gl.vertexAttribPointer(vertexID,
-        2,
-        gl.FLOAT,
-        false,
-        0,
-        0);
-        
+      gl.vertexAttribPointer(vertexID, 2, gl.FLOAT, false, 0, 0);
+
       gl.bindVertexArray(null);
-      
+
       setCurrentValues();
 
       render();
     });
-  }
+  };
 
   const render = function() {
     gl.clearColor(0, 0, 0, 1);
     // gl.enable(gl.CULL_FACE);
     gl.enable(gl.DEPTH_TEST);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-    
+
     gl.useProgram(renderShaderProgram);
     gl.uniformMatrix4fv(u_MCPC, false, MCPC);
     gl.uniformMatrix4fv(u_MCVC, false, MCVC);
@@ -466,32 +500,32 @@ function Volume3D() {
     gl.uniform1f(u_planeDist3, volume.current.planeDist3);
     gl.uniform1f(u_planeDist4, volume.current.planeDist4);
     gl.uniform1f(u_planeDist5, volume.current.planeDist5);
-    
-    gl.activeTexture(gl.TEXTURE0);  
+
+    gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, vbo_colorBuffer);
     gl.uniform1i(u_color, 0);
-    gl.activeTexture(gl.TEXTURE1); 
+    gl.activeTexture(gl.TEXTURE1);
     gl.bindTexture(gl.TEXTURE_3D, vbo_volumeBuffer);
     gl.uniform1i(u_volume, 1);
     gl.activeTexture(gl.TEXTURE2);
     gl.bindTexture(gl.TEXTURE_2D, vbo_jitterTexture);
     gl.uniform1i(u_jitter, 2);
-    
+
     gl.bindVertexArray(vao);
 
     gl.drawArrays(gl.TRIANGLES, 0, vertices.length / 2);
-  }
+  };
 
   useEffect(onMounted, []);
 
-  return(
+  return (
     <div>
       <Grid container spacing={3}>
         <Grid item xs>
           <Typography gutterBottom>3D Volume Rendering with transfer function</Typography>
         </Grid>
       </Grid>
-      <canvas id="glcanvas" width="500" height ="500"/>
+      <canvas id="glcanvas" width="500" height="500" />
     </div>
   );
 }
