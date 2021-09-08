@@ -35,6 +35,7 @@ import SimpleVolume3D from './component/Volume/SimpleVolume3D';
 import SphereComponent from './component/Mesh/Sphere';
 import Mesh2DOutline1 from './component/Mesh/Mesh2DOutline1';
 import Mesh2DOutline2 from './component/Mesh/Mesh2DOutline2';
+import Mesh2DOutline3 from './component/Mesh/Mesh2DOutline3';
 import OctreeLine from './component/Mesh/OctreeLine';
 import Spline from './component/Interpolation/Spline';
 import PhongModel from './component/Light/PhongModel';
@@ -281,7 +282,10 @@ function App() {
               <ListItem button key={2} component={RouterLink} to="/Mesh_Mesh2DOutline2">
                 Mesh 2D Outline 2
               </ListItem>
-              <ListItem button key={3} component={RouterLink} to="/Mesh_OctreeLine">
+              <ListItem button key={3} component={RouterLink} to="/Mesh_Mesh2DOutline3">
+                Mesh 2D Outline 3
+              </ListItem>
+              <ListItem button key={4} component={RouterLink} to="/Mesh_OctreeLine">
                 Octree Line
               </ListItem>
             </Collapse>
@@ -356,6 +360,7 @@ function App() {
             <Route exact path="/Mesh_Sphere" component={SphereComponent} />
             <Route exact path="/Mesh_Mesh2DOutline1" component={Mesh2DOutline1} />
             <Route exact path="/Mesh_Mesh2DOutline2" component={Mesh2DOutline2} />
+            <Route exact path="/Mesh_Mesh2DOutline3" component={Mesh2DOutline3} />
             <Route exact path="/Mesh_OctreeLine" component={OctreeLine} />
 
             <Route exact path="/Volume_VolumeSlice" component={VolumeSlice} />
