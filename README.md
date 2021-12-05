@@ -1,4 +1,6 @@
-# This repository is to practice how to use WebGL.
+Introduction
+============
+This repository is to practice how to use WebGL.
 
 Samples Usage
 =============
