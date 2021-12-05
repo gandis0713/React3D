@@ -1,6 +1,6 @@
 Introduction
 ============
-This repository is to practice how to use WebGL.
+The aim of the project is to study a way to rendering and visualization 3D objects on a WebGL.
 
 Samples Usage
 =============
